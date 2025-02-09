@@ -9,15 +9,19 @@ import {
   ListOrdered,
   Keyboard,
   Highlighter,
+  Redo,
+  Undo,
 } from "lucide-react";
 import { LegacyRef, useState } from "react";
 import { HexColorPicker } from "react-colorful";
-import { useClickAway } from "@uidotdev/usehooks";
+import { useClickAway, useDebounce } from "@uidotdev/usehooks";
 import { Settings } from "./Settings";
 import { MenuProps } from "../declaration";
 
 export const MenuBar: React.FC<MenuProps> = ({ editor }) => {
   const [color, setColor] = useState("#ffff00");
+  const debouncedColor = useDebounce(color, 500);
+
   const [showColorPicker, setShowColorPicker] = useState(false);
   const ref = useClickAway(() => {
     setShowColorPicker(false);
@@ -26,6 +30,18 @@ export const MenuBar: React.FC<MenuProps> = ({ editor }) => {
   if (!editor) {
     return null;
   }
+
+  const handleUndo = () => {
+    if (editor) {
+      editor.chain().focus().undo().run();
+    }
+  };
+
+  const handleRedo = () => {
+    if (editor) {
+      editor.chain().focus().redo().run();
+    }
+  };
 
   return (
     <div className="border-b border-gray-200 bg-white sticky top-0 z-10">
@@ -143,20 +159,43 @@ export const MenuBar: React.FC<MenuProps> = ({ editor }) => {
           <div className="w-px h-6 bg-gray-200 mx-2" />
 
           {/* Highlighter button */}
-          <button
-            onClick={() => {
-              // Toggle the visibility of the color picker
-              setShowColorPicker((prev) => !prev);
-            }}
-            className={`p-2 rounded-md hover:bg-gray-100 transition-colors flex items-center gap-1 ${
-              editor.isActive("Highlighter")
-                ? "bg-gray-100 text-blue-600"
-                : "text-gray-600"
-            }`}
-            title="Highlight Text"
-          >
-            <Highlighter className="w-5 h-5" />
-          </button>
+          <div className="flex items-center space-x-1 mr-2">
+            <button
+              onClick={() => {
+                // Toggle the visibility of the color picker
+                setShowColorPicker((prev) => !prev);
+              }}
+              className={`p-2 rounded-md hover:bg-gray-100 transition-colors flex items-center gap-1 ${
+                editor.isActive("Highlighter")
+                  ? "bg-gray-100 text-blue-600"
+                  : "text-gray-600"
+              }`}
+              title="Highlight Text"
+            >
+              <Highlighter className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="w-px h-6 bg-gray-200 mx-2" />
+
+          {/* Actions buttons */}
+          <div className="flex items-center space-x-1 mr-2">
+            <button
+              onClick={handleUndo}
+              disabled={!editor.can().undo()}
+              className={`p-2 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50`}
+              title="Undo"
+            >
+              <Undo className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleRedo}
+              disabled={!editor.can().redo()}
+              className={`p-2 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50 `}
+              title="Redo"
+            >
+              <Redo className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Highlighter button */}
@@ -169,11 +208,15 @@ export const MenuBar: React.FC<MenuProps> = ({ editor }) => {
           className="absolute top-2 right-4 z-90 shadow-lg p-2 bg-white border rounded"
         >
           <HexColorPicker
-            color={color}
+            color={debouncedColor}
             onChange={(newColor) => {
               setColor(newColor);
               // Update the highlighter mark on selected text with the chosen color.
-              editor?.chain().focus().setHighlighter({ color: newColor }).run();
+              editor
+                ?.chain()
+                .focus()
+                .setHighlighter({ color: debouncedColor })
+                .run();
             }}
           />
         </div>
