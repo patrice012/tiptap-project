@@ -59,7 +59,7 @@ const Tiptap: React.FC = () => {
     autofocus: true,
   });
 
-  const editorJsonValue = editor?.getJSON() || {};
+  const editorJsonValue = editor?.getHTML() || {};
   store.save(editorJsonValue);
 
   return (
