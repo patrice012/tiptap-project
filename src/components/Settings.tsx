@@ -3,11 +3,18 @@ import { LegacyRef, useState } from "react";
 import { useClickAway } from "@uidotdev/usehooks";
 import { exportAsJson } from "../utils/jsonExport";
 import { MenuProps } from "../declaration";
+import { exportAsHtml } from "../utils/htmlExport";
 
 export const Settings: React.FC<MenuProps> = ({ editor }) => {
   const [showSettings, setShowSettings] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [importJson, setImportJson] = useState("");
+  const [showImportModal, setShowImportModal] = useState<{
+    type?: "html" | "json";
+    state: boolean;
+  }>({
+    type: "html",
+    state: false,
+  });
+  const [importData, setimportData] = useState("");
   const [importError, setImportError] = useState<string | null>(null);
 
   // Hide settings when clicking outside
@@ -19,28 +26,42 @@ export const Settings: React.FC<MenuProps> = ({ editor }) => {
     return null;
   }
 
-  // Get the current editor content as JSON
-  const editorJsonValue = editor.getJSON();
-
   const handleJsonExport = () => {
-    exportAsJson({ data: editorJsonValue, fileName: "text.json" });
+    // Get the current editor content as JSON
+    const editorJsonValue = editor.getJSON();
+    exportAsJson({ data: editorJsonValue, fileName: "editor-content.json" });
   };
 
-  // Validate and "save" the imported JSON
-  const handleImportSave = () => {
-    try {
-      const parsed = JSON.parse(importJson);
-      // Set parsed data as a current editor text
-      editor.commands.setContent(parsed);
+  const handleHtmlExport = () => {
+    // Get the current editor content as HTML
+    const editorHtmlValue = editor.getHTML();
+    exportAsHtml({ data: editorHtmlValue, fileName: "editor-content.html" });
+  };
 
-      // Close modal
-      setShowImportModal(false);
-      setImportJson("");
-      setImportError(null);
-    } catch (error) {
-      console.log(error, "error importing data");
-      setImportError("Invalid JSON. Please check your input.");
+  // Validate and "save" the imported data
+  const handleImportSave = () => {
+    if (showImportModal.type === "json") {
+      try {
+        // Set parsed data as a current editor text
+        const parsed = JSON.parse(importData);
+        editor.commands.setContent(parsed);
+      } catch (error) {
+        console.log(error, "error importing data");
+        setImportError("Invalid JSON. Please check your input.");
+      }
+    } else if (showImportModal.type === "html") {
+      try {
+        // Set parsed data as a current editor text
+        editor.commands.setContent(importData);
+      } catch (error) {
+        console.log(error, "error importing data");
+        setImportError("Invalid HTML. Please check your input.");
+      }
     }
+    // Close modal
+    setShowImportModal({ state: false });
+    setimportData("");
+    setImportError(null);
   };
 
   return (
@@ -71,26 +92,45 @@ export const Settings: React.FC<MenuProps> = ({ editor }) => {
             </button>
             <button
               onClick={() => {
-                setShowImportModal(true);
+                setShowImportModal({ state: true, type: "json" });
                 setShowSettings(false);
               }}
               className="flex items-center justify-between"
             >
               Import as JSON
             </button>
+            <button
+              onClick={handleHtmlExport}
+              className="flex items-center justify-between"
+            >
+              Export as HTML
+            </button>
+            <button
+              onClick={() => {
+                setShowImportModal({ state: true, type: "html" });
+                setShowSettings(false);
+              }}
+              className="flex items-center justify-between"
+            >
+              Import as HTML
+            </button>
           </div>
         ) : null}
       </div>
 
-      {showImportModal && (
+      {showImportModal.state && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="absolute inset-0 bg-black opacity-50"></div>
           <div className="bg-white p-6 rounded-lg z-50 w-8/12 min-w-md">
-            <h2 className="text-lg font-bold mb-4">Import JSON Content</h2>
+            <h2 className="text-lg font-bold mb-4">
+              Import {showImportModal.type === "json" ? "JSON" : "HTML"} Content
+            </h2>
             <textarea
-              value={importJson}
-              onChange={(e) => setImportJson(e.target.value)}
-              placeholder="Paste JSON here"
+              value={importData}
+              onChange={(e) => setimportData(e.target.value)}
+              placeholder={`Paste ${
+                showImportModal.type === "json" ? "JSON" : "HTML"
+              } here`}
               rows={5}
               className="w-full p-2 border rounded mb-2"
             />
@@ -98,8 +138,8 @@ export const Settings: React.FC<MenuProps> = ({ editor }) => {
             <div className="flex justify-end space-x-2">
               <button
                 onClick={() => {
-                  setShowImportModal(false);
-                  setImportJson("");
+                  setShowImportModal({ state: false });
+                  setimportData("");
                   setImportError(null);
                 }}
                 className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
