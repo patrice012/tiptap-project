@@ -1,4 +1,4 @@
-import Tiptap from "./components";
+import Tiptap from "./components/Tiptap";
 
 function App() {
   return (

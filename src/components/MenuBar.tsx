@@ -13,7 +13,7 @@ import {
 import { LegacyRef, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import { useClickAway } from "@uidotdev/usehooks";
-import { Settings } from "./settings";
+import { Settings } from "./Settings";
 import { MenuProps } from "../declaration";
 
 export const MenuBar: React.FC<MenuProps> = ({ editor }) => {

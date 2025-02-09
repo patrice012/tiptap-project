@@ -8,10 +8,10 @@ import Underline from "@tiptap/extension-underline";
 import BulletList from "@tiptap/extension-bullet-list";
 import OrderedList from "@tiptap/extension-ordered-list";
 import ListItem from "@tiptap/extension-list-item";
-import { Heading } from "./core/heading";
-import { MenuBar } from "./menuBar";
-import { Highlighter } from "./core/command";
-import { Storage } from "../dataFetcher/store";
+import { Heading } from "./core/Heading";
+import { MenuBar } from "./MenuBar";
+import { Storage } from "../dataFetcher/Storage";
+import { Highlighter } from "../extensions/Highlighter";
 
 const Tiptap: React.FC = () => {
   const store = new Storage();
