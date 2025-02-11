@@ -7,6 +7,7 @@ import { MenuProps } from "../declaration";
 export const HighlighterMenu: React.FC<MenuProps> = ({ editor }) => {
   const [selectedColor, setSelectedColor] = useState("#FFFF00");
   const debouncedColor = useDebounce(selectedColor, 400);
+  const [canHighlightText, setcanHighlightText] = useState(false);
 
   const [showColorPicker, setShowColorPicker] = useState(false);
   const ref = useClickAway(() => {
@@ -15,6 +16,7 @@ export const HighlighterMenu: React.FC<MenuProps> = ({ editor }) => {
 
   const handleHighlightClick = () => {
     if (!editor) return;
+    setcanHighlightText(true);
 
     if (editor.isActive("Highlighter")) {
       // Remove highlight if already active
@@ -27,8 +29,10 @@ export const HighlighterMenu: React.FC<MenuProps> = ({ editor }) => {
 
   useEffect(() => {
     if (!editor) return;
+    if (!canHighlightText) return;
+
     editor.chain().focus().setHighlighter({ color: debouncedColor }).run();
-  }, [editor, debouncedColor]);
+  }, [editor, debouncedColor, canHighlightText]);
 
   if (!editor) {
     return null;
